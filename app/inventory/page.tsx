@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Upload, Plus, Printer, Edit2, Save, X } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
 
@@ -11,22 +10,21 @@ interface Product {
   name: string;
   barcode: string;
   price: number;
-  cost: number;
+  cost_price: number;
   stock: number;
-  serial?: string;
+  serial_number?: string;
 }
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingProducts, setEditingProducts] = useState<Product[]>([]);
 
   const [newProduct, setNewProduct] = useState({
-    name: '', barcode: '', price: 0, cost: 0, stock: 0, serial: '',
+    name: '', barcode: '', price: 0, cost_price: 0, stock: 0, serial_number: '',
   });
 
-  // ==================== جلب المنتجات من Supabase ====================
+  // جلب المنتجات
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from('products')
@@ -34,15 +32,15 @@ export default function InventoryPage() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      toast.error('فشل في جلب المنتجات');
-      console.error(error);
+      console.error('Supabase Error:', error);
+      toast.error('فشل في الاتصال بقاعدة البيانات');
     } else {
       setProducts(data || []);
     }
     setLoading(false);
   };
 
-  // ==================== إضافة منتج ====================
+  // إضافة منتج
   const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.barcode) {
       toast.error('الاسم والباركود مطلوبين');
@@ -53,34 +51,31 @@ export default function InventoryPage() {
       name: newProduct.name,
       barcode: newProduct.barcode,
       price: newProduct.price,
-      cost_price: newProduct.cost,
+      cost_price: newProduct.cost_price,
       stock: newProduct.stock,
-      serial_number: newProduct.serial || null,
+      serial_number: newProduct.serial_number || null,
     }]);
 
     if (error) {
-      toast.error('فشل في إضافة المنتج');
+      console.error('Insert Error:', error);
+      toast.error('فشل في إضافة المنتج: ' + error.message);
     } else {
       toast.success('تم إضافة الصنف بنجاح');
       setShowAddModal(false);
-      setNewProduct({ name: '', barcode: '', price: 0, cost: 0, stock: 0, serial: '' });
-      fetchProducts(); // تحديث القائمة
+      setNewProduct({ name: '', barcode: '', price: 0, cost_price: 0, stock: 0, serial_number: '' });
+      fetchProducts();
     }
   };
 
-  // ==================== Realtime Subscription ====================
+  // Realtime
   useEffect(() => {
     fetchProducts();
 
-    // الاشتراك في التغييرات الفورية
     const channel = supabase
-      .channel('products-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'products' }, 
-        () => {
-          fetchProducts(); // تحديث تلقائي عند أي تغيير
-        }
-      )
+      .channel('products-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        fetchProducts();
+      })
       .subscribe();
 
     return () => {
@@ -88,33 +83,7 @@ export default function InventoryPage() {
     };
   }, []);
 
-  // ==================== التعديل الجماعي ====================
-  const startBulkEdit = () => setEditingProducts([...products]);
-  
-  const saveBulkEdit = async () => {
-    // TODO: يمكن تنفيذ تحديث جماعي لاحقًا
-    setProducts(editingProducts);
-    setEditingProducts([]);
-    toast.success('تم حفظ التعديلات');
-  };
-
-  const cancelBulkEdit = () => setEditingProducts([]);
-
-  // ==================== تحميل نموذج Excel ====================
-  const downloadTemplate = () => {
-    const template = [
-      { 'الاسم': 'آيفون 16 برو', 'الباركود': '1234567890123', 'السعر': 45900, 'تكلفة': 38000, 'الكمية': 12, 'السيريال': 'F9K2L9P' }
-    ];
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "المنتجات");
-    XLSX.writeFile(wb, "نموذج_استيراد_المنتجات.xlsx");
-    toast.success('تم تحميل النموذج');
-  };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>;
-  }
+  if (loading) return <div className="p-6">جاري التحميل من Supabase...</div>;
 
   return (
     <div className="min-h-screen bg-zinc-50 p-6">
@@ -122,19 +91,13 @@ export default function InventoryPage() {
         <div className="flex justify-between mb-8">
           <div>
             <h1 className="text-3xl font-semibold">إدارة المخزن</h1>
-            <p className="text-zinc-500">الأصناف والباركود (متصل بـ Supabase)</p>
+            <p className="text-sm text-emerald-600">متصل بـ Supabase • Realtime مفعل</p>
           </div>
-          <div className="flex gap-3">
-            <button onClick={downloadTemplate} className="pos-button pos-button-secondary">
-              تحميل نموذج Excel
-            </button>
-            <button onClick={() => setShowAddModal(true)} className="pos-button pos-button-primary">
-              <Plus className="w-4 h-4" /> إضافة صنف
-            </button>
-          </div>
+          <button onClick={() => setShowAddModal(true)} className="pos-button pos-button-primary">
+            <Plus className="w-4 h-4" /> إضافة صنف
+          </button>
         </div>
 
-        {/* جدول المنتجات */}
         <div className="pos-card overflow-hidden">
           <table className="w-full">
             <thead>
@@ -147,34 +110,42 @@ export default function InventoryPage() {
               </tr>
             </thead>
             <tbody>
-              {(editingProducts.length > 0 ? editingProducts : products).map((product, index) => (
-                <tr key={index} className="border-b hover:bg-zinc-50">
-                  <td className="p-4 font-medium">{product.name}</td>
-                  <td className="p-4 font-mono text-sm">{product.barcode}</td>
-                  <td className="p-4 font-semibold">{product.price.toLocaleString()} ج.م</td>
-                  <td className="p-4 text-zinc-500">{product.cost.toLocaleString()} ج.م</td>
-                  <td className="p-4 text-center">
-                    <span className="status-badge bg-emerald-100 text-emerald-700">{product.stock}</span>
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-zinc-400">
+                    لا توجد منتجات بعد. أضف أول منتج.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                products.map((product, index) => (
+                  <tr key={index} className="border-b hover:bg-zinc-50">
+                    <td className="p-4 font-medium">{product.name}</td>
+                    <td className="p-4 font-mono text-sm">{product.barcode}</td>
+                    <td className="p-4 font-semibold">{product.price.toLocaleString()} ج.م</td>
+                    <td className="p-4 text-zinc-500">{product.cost_price?.toLocaleString()} ج.م</td>
+                    <td className="p-4 text-center">
+                      <span className="status-badge bg-emerald-100 text-emerald-700">{product.stock}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* مودال إضافة صنف */}
+        {/* مودال إضافة */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 w-full max-w-md">
               <h3 className="text-xl font-semibold mb-6">إضافة صنف جديد</h3>
               <div className="space-y-4">
-                <input type="text" placeholder="اسم الصنف" className="pos-input" value={newProduct.name} onChange={(e) => setNewProduct({...newProduct, name: e.target.value})} />
-                <input type="text" placeholder="الباركود" className="pos-input" value={newProduct.barcode} onChange={(e) => setNewProduct({...newProduct, barcode: e.target.value})} />
+                <input type="text" placeholder="اسم الصنف" className="pos-input" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} />
+                <input type="text" placeholder="الباركود" className="pos-input" value={newProduct.barcode} onChange={(e) => setNewProduct({ ...newProduct, barcode: e.target.value })} />
                 <div className="grid grid-cols-2 gap-4">
-                  <input type="number" placeholder="سعر البيع" className="pos-input" value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: Number(e.target.value)})} />
-                  <input type="number" placeholder="سعر التكلفة" className="pos-input" value={newProduct.cost} onChange={(e) => setNewProduct({...newProduct, cost: Number(e.target.value)})} />
+                  <input type="number" placeholder="سعر البيع" className="pos-input" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })} />
+                  <input type="number" placeholder="سعر التكلفة" className="pos-input" value={newProduct.cost_price} onChange={(e) => setNewProduct({ ...newProduct, cost_price: Number(e.target.value) })} />
                 </div>
-                <input type="number" placeholder="الكمية" className="pos-input" value={newProduct.stock} onChange={(e) => setNewProduct({...newProduct, stock: Number(e.target.value)})} />
+                <input type="number" placeholder="الكمية" className="pos-input" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: Number(e.target.value) })} />
               </div>
               <div className="flex gap-3 mt-6">
                 <button onClick={() => setShowAddModal(false)} className="flex-1 pos-button pos-button-secondary">إلغاء</button>
