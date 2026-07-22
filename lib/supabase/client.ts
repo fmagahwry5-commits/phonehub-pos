@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 
 export const supabase = (() => {
   if (typeof window === 'undefined') {
-    // أثناء البناء (Build Time) - نرجع كائن فارغ
     return {} as any;
   }
   
