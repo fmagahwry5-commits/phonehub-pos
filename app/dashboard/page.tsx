@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { 
-  ShoppingCart, Users, Package, TrendingUp, Clock, 
+  ShoppingCart, Users, Package, Clock, 
   DollarSign, ArrowUpRight, ArrowDownRight 
 } from 'lucide-react';
 
@@ -10,42 +10,42 @@ export default function Dashboard() {
   const stats = [
     { 
       title: "مبيعات اليوم", 
-      value: "١٢,٤٥٠", 
+      value: "12450", 
       unit: "ج.م", 
-      change: "+١٨%", 
+      change: "+18%", 
       positive: true,
       icon: DollarSign 
     },
     { 
       title: "فواتير اليوم", 
-      value: "٣٤", 
+      value: "34", 
       unit: "فاتورة", 
-      change: "+٧", 
+      change: "+7", 
       positive: true,
       icon: ShoppingCart 
     },
     { 
       title: "العملاء الجدد", 
-      value: "١٢", 
+      value: "12", 
       unit: "عميل", 
-      change: "-٢", 
+      change: "-2", 
       positive: false,
       icon: Users 
     },
     { 
       title: "الأصناف في المخزن", 
-      value: "٢٨٧", 
+      value: "287", 
       unit: "صنف", 
-      change: "+٥", 
+      change: "+5", 
       positive: true,
       icon: Package 
     },
   ];
 
   const recentInvoices = [
-    { id: "INV-2024-0891", customer: "أحمد محمد", total: ٨٩٠٠, type: "بيع" },
-    { id: "INV-2024-0890", customer: "سارة علي", total: ١٢٥٠٠, type: "بيع" },
-    { id: "INV-2024-0889", customer: "محمد خالد", total: ٣٤٠٠, type: "بيع" },
+    { id: "INV-2024-0891", customer: "أحمد محمد", total: 8900, type: "بيع" },
+    { id: "INV-2024-0890", customer: "سارة علي", total: 12500, type: "بيع" },
+    { id: "INV-2024-0889", customer: "محمد خالد", total: 3400, type: "بيع" },
   ];
 
   return (
@@ -60,7 +60,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="px-4 py-2 bg-white rounded-xl border flex items-center gap-2 text-sm">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-            <span className="font-medium">متصل • ٤ أجهزة</span>
+            <span className="font-medium">متصل • 4 أجهزة</span>
           </div>
           <button className="pos-button pos-button-primary">
             <Clock className="w-4 h-4" /> فتح وردية جديدة

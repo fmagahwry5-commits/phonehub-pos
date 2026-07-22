@@ -111,3 +111,12 @@ export interface SearchResult {
   details: string;
   data: any;
 }
+
+export interface SyncQueueItem {
+  id: string;
+  table: string;
+  action: 'insert' | 'update' | 'delete';
+  data: any;
+  timestamp: number;
+  synced: boolean;
+}

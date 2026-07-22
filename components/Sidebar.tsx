@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, 
-  Clock, Printer, Settings, LogOut 
+  Clock, Printer, Settings, LogOut, Truck, Search, DollarSign,
+  Wrench, CreditCard
 } from 'lucide-react';
 
 const navItems = [
@@ -15,6 +16,9 @@ const navItems = [
   { href: '/customers', label: 'العملاء', icon: Users },
   { href: '/suppliers', label: 'الموردين', icon: Truck },
   { href: '/search', label: 'البحث الشامل', icon: Search },
+  { href: '/reports', label: 'التقارير المالية', icon: DollarSign },
+  { href: '/repairs', label: 'الصيانة', icon: Wrench },
+  { href: '/installments', label: 'الأقساط', icon: CreditCard },
   { href: '/suspended', label: 'الفواتير المعلقة', icon: Clock },
   { href: '/shifts', label: 'الورديات', icon: Clock },
   { href: '/invoice', label: 'طباعة الفواتير', icon: Printer },
