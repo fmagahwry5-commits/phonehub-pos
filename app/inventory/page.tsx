@@ -1,7 +1,6 @@
 'use client';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 import React, { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
@@ -27,7 +26,6 @@ export default function InventoryPage() {
     name: '', barcode: '', price: 0, cost_price: 0, stock: 0, serial_number: '',
   });
 
-  // جلب المنتجات
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from('products')
@@ -35,15 +33,14 @@ export default function InventoryPage() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Supabase Error:', error);
-      toast.error('فشل في الاتصال بقاعدة البيانات');
+      console.error(error);
+      toast.error('فشل في جلب المنتجات');
     } else {
       setProducts(data || []);
     }
     setLoading(false);
   };
 
-  // إضافة منتج
   const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.barcode) {
       toast.error('الاسم والباركود مطلوبين');
@@ -60,8 +57,7 @@ export default function InventoryPage() {
     }]);
 
     if (error) {
-      console.error('Insert Error:', error);
-      toast.error('فشل في إضافة المنتج: ' + error.message);
+      toast.error('فشل في إضافة المنتج');
     } else {
       toast.success('تم إضافة الصنف بنجاح');
       setShowAddModal(false);
@@ -70,12 +66,11 @@ export default function InventoryPage() {
     }
   };
 
-  // Realtime
   useEffect(() => {
     fetchProducts();
 
     const channel = supabase
-      .channel('products-realtime')
+      .channel('products-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
         fetchProducts();
       })
@@ -86,7 +81,9 @@ export default function InventoryPage() {
     };
   }, []);
 
-  if (loading) return <div className="p-6">جاري التحميل من Supabase...</div>;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 p-6">
@@ -94,7 +91,7 @@ export default function InventoryPage() {
         <div className="flex justify-between mb-8">
           <div>
             <h1 className="text-3xl font-semibold">إدارة المخزن</h1>
-            <p className="text-sm text-emerald-600">متصل بـ Supabase • Realtime مفعل</p>
+            <p className="text-emerald-600 text-sm">متصل بـ Supabase • Realtime مفعل</p>
           </div>
           <button onClick={() => setShowAddModal(true)} className="pos-button pos-button-primary">
             <Plus className="w-4 h-4" /> إضافة صنف
@@ -116,7 +113,7 @@ export default function InventoryPage() {
               {products.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-zinc-400">
-                    لا توجد منتجات بعد. أضف أول منتج.
+                    لا توجد منتجات. أضف أول منتج.
                   </td>
                 </tr>
               ) : (
@@ -136,7 +133,6 @@ export default function InventoryPage() {
           </table>
         </div>
 
-        {/* مودال إضافة */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 w-full max-w-md">
