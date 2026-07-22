@@ -1,27 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-let supabaseClient: ReturnType<typeof createClient> | null = null;
-
-export function getSupabase() {
-  if (!supabaseClient) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase environment variables are missing');
-    }
-
-    supabaseClient = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-      },
-    });
+export const supabase = (() => {
+  if (typeof window === 'undefined') {
+    // أثناء البناء (Build Time) - نرجع كائن فارغ
+    return {} as any;
   }
-  return supabaseClient;
-}
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
 
-// للاستخدام المباشر في الـ Client Components
-export const supabase = typeof window !== 'undefined' 
-  ? getSupabase() 
-  : ({} as any);
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Supabase environment variables are missing');
+    return {} as any;
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
+})();
